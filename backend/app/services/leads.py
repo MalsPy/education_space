@@ -1,0 +1,101 @@
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, func
+from sqlalchemy.orm import selectinload
+from fastapi import HTTPException, status
+from app.models.lead import Lead, LeadStatus
+from app.models.course import Course
+from app.schemas.lead import LeadCreate, LeadUpdate, LeadStatusUpdate
+from app.services.telegram import send_lead_notification
+from app.utils.pagination import PaginationParams, PagedResponse
+
+
+async def get_leads(
+    db: AsyncSession,
+    params: PaginationParams,
+    status_filter: LeadStatus | None = None,
+) -> PagedResponse[Lead]:
+    query = select(Lead).options(selectinload(Lead.course_rel))
+    count_query = select(func.count(Lead.id))
+
+    if status_filter:
+        query = query.where(Lead.status == status_filter)
+        count_query = count_query.where(Lead.status == status_filter)
+
+    query = query.order_by(Lead.created_at.desc()).offset(params.offset).limit(params.limit)
+
+    total = (await db.execute(count_query)).scalar_one()
+    result = await db.execute(query)
+    leads = list(result.scalars().all())
+
+    return PagedResponse.create(items=leads, total=total, params=params)
+
+
+async def get_lead(db: AsyncSession, lead_id: int) -> Lead:
+    result = await db.execute(
+        select(Lead).options(selectinload(Lead.course_rel)).where(Lead.id == lead_id)
+    )
+    lead = result.scalar_one_or_none()
+    if not lead:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lead not found")
+    return lead
+
+
+async def create_lead(data: LeadCreate, db: AsyncSession) -> Lead:
+    # Resolve course name for Telegram
+    course_name: str | None = None
+    if data.course_id:
+        course_result = await db.execute(select(Course).where(Course.id == data.course_id))
+        course = course_result.scalar_one_or_none()
+        if course:
+            course_name = course.title
+
+    lead = Lead(**data.model_dump())
+    db.add(lead)
+    await db.flush()
+    await db.refresh(lead)
+
+    # Fire-and-forget Telegram notification (non-blocking)
+    await send_lead_notification(
+        name=data.name,
+        phone=data.phone,
+        course_name=course_name,
+    )
+
+    return lead
+
+
+async def update_lead(lead_id: int, data: LeadUpdate, db: AsyncSession) -> Lead:
+    lead = await get_lead(db, lead_id)
+    for field, value in data.model_dump(exclude_unset=True).items():
+        setattr(lead, field, value)
+    await db.flush()
+    await db.refresh(lead)
+    return lead
+
+
+async def update_lead_status(lead_id: int, data: LeadStatusUpdate, db: AsyncSession) -> Lead:
+    lead = await get_lead(db, lead_id)
+    lead.status = data.status
+    if data.notes is not None:
+        lead.notes = data.notes
+    await db.flush()
+    await db.refresh(lead)
+    return lead
+
+
+async def delete_lead(lead_id: int, db: AsyncSession) -> None:
+    lead = await get_lead(db, lead_id)
+    await db.delete(lead)
+    await db.flush()
+
+
+async def get_leads_stats(db: AsyncSession) -> dict:
+    result = await db.execute(
+        select(Lead.status, func.count(Lead.id)).group_by(Lead.status)
+    )
+    rows = result.all()
+    stats = {status.value: 0 for status in LeadStatus}
+    for row_status, count in rows:
+        stats[row_status.value] = count
+    stats["total"] = sum(stats.values())
+    return stats
