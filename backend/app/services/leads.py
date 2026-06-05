@@ -4,7 +4,7 @@ from sqlalchemy.orm import selectinload
 from fastapi import HTTPException, status
 from app.models.lead import Lead, LeadStatus
 from app.models.course import Course
-from app.schemas.lead import LeadCreate, LeadUpdate, LeadStatusUpdate
+from app.schemas.lead import LeadCreate, LeadUpdate, LeadStatusUpdate, LeadOut
 from app.services.telegram import send_lead_notification
 from app.utils.pagination import PaginationParams, PagedResponse
 
@@ -13,7 +13,7 @@ async def get_leads(
     db: AsyncSession,
     params: PaginationParams,
     status_filter: LeadStatus | None = None,
-) -> PagedResponse[Lead]:
+) -> PagedResponse[LeadOut]:
     query = select(Lead).options(selectinload(Lead.course_rel))
     count_query = select(func.count(Lead.id))
 
@@ -27,7 +27,7 @@ async def get_leads(
     result = await db.execute(query)
     leads = list(result.scalars().all())
 
-    return PagedResponse.create(items=leads, total=total, params=params)
+    return PagedResponse.create(items=leads, total=total, params=params, item_schema=LeadOut)
 
 
 async def get_lead(db: AsyncSession, lead_id: int) -> Lead:
@@ -41,7 +41,6 @@ async def get_lead(db: AsyncSession, lead_id: int) -> Lead:
 
 
 async def create_lead(data: LeadCreate, db: AsyncSession) -> Lead:
-    # Resolve course name for Telegram
     course_name: str | None = None
     if data.course_id:
         course_result = await db.execute(select(Course).where(Course.id == data.course_id))
@@ -54,13 +53,7 @@ async def create_lead(data: LeadCreate, db: AsyncSession) -> Lead:
     await db.flush()
     await db.refresh(lead)
 
-    # Fire-and-forget Telegram notification (non-blocking)
-    await send_lead_notification(
-        name=data.name,
-        phone=data.phone,
-        course_name=course_name,
-    )
-
+    await send_lead_notification(name=data.name, phone=data.phone, course_name=course_name)
     return lead
 
 
@@ -94,8 +87,8 @@ async def get_leads_stats(db: AsyncSession) -> dict:
         select(Lead.status, func.count(Lead.id)).group_by(Lead.status)
     )
     rows = result.all()
-    stats = {status.value: 0 for status in LeadStatus}
+    stats = {s.value: 0 for s in LeadStatus}
     for row_status, count in rows:
         stats[row_status.value] = count
-    stats["total"] = sum(stats.values())
+    stats["total"] = sum(v for k, v in stats.items() if k != "total")
     return stats

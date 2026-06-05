@@ -3,7 +3,6 @@ name = "education-space-backend"
 version = "0.1.0"
 description = "Education Space EdTech SaaS — FastAPI Backend"
 requires-python = ">=3.13"
-
 dependencies = [
     "fastapi>=0.115.0",
     "uvicorn[standard]>=0.32.0",
@@ -22,10 +21,12 @@ dependencies = [
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.uv]
-dev-dependencies = [
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[dependency-groups]
+dev = [
     "pytest>=8.3.0",
     "pytest-asyncio>=0.24.0",
     "httpx>=0.28.0",
 ]
-EOF

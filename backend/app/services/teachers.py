@@ -2,19 +2,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from fastapi import HTTPException, status
 from app.models.teacher import Teacher
-from app.schemas.teacher import TeacherCreate, TeacherUpdate
+from app.schemas.teacher import TeacherCreate, TeacherUpdate, TeacherOut
 from app.utils.pagination import PaginationParams, PagedResponse
 
 
-async def get_teachers(db: AsyncSession, params: PaginationParams) -> PagedResponse[Teacher]:
-    count_result = await db.execute(select(func.count(Teacher.id)))
-    total = count_result.scalar_one()
-
+async def get_teachers(db: AsyncSession, params: PaginationParams) -> PagedResponse[TeacherOut]:
+    total = (await db.execute(select(func.count(Teacher.id)))).scalar_one()
     result = await db.execute(
         select(Teacher).order_by(Teacher.name).offset(params.offset).limit(params.limit)
     )
     teachers = list(result.scalars().all())
-    return PagedResponse.create(items=teachers, total=total, params=params)
+    return PagedResponse.create(items=teachers, total=total, params=params, item_schema=TeacherOut)
 
 
 async def get_teacher(db: AsyncSession, teacher_id: int) -> Teacher:
