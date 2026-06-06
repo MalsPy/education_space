@@ -42,8 +42,8 @@ Then open:
 - [x] Phase 2 — Backend setup (uv)
 - [x] Phase 3 — Auth system
 - [x] Phase 4 — Courses / Teachers / Leads API
-- [ ] Phase 5 — Frontend UI
-- [ ] Phase 6 — Admin panel
+- [x] Phase 5 — Frontend UI
+- [x] Phase 6 — Admin panel
 - [x] Phase 7 — Telegram integration
-- [ ] Phase 8 — Docker + Nginx
+- [x] Phase 8 — Docker + Nginx
 - [ ] Phase 9 — Final integration
