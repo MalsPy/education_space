@@ -2,7 +2,6 @@ import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
-from sqlalchemy import text
 
 from app.core.config import settings
 from app.core.database import engine, AsyncSessionLocal, Base
@@ -15,6 +14,7 @@ from app.routers import (
     teachers_router,
     leads_router,
     dashboard_router,
+    telegram_router,
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -22,7 +22,6 @@ logger = logging.getLogger(__name__)
 
 
 async def seed_admin():
-    """Create the first admin user if no users exist."""
     async with AsyncSessionLocal() as session:
         from sqlalchemy import select, func
         count = (await session.execute(select(func.count(User.id)))).scalar_one()
@@ -40,7 +39,6 @@ async def seed_admin():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
     logger.info("Starting Education Space API...")
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -48,29 +46,26 @@ async def lifespan(app: FastAPI):
     await seed_admin()
     logger.info("✓ Application ready")
     yield
-    # Shutdown
     await engine.dispose()
     logger.info("Application shut down")
 
 
 app = FastAPI(
     title="Education Space API",
-    description="EdTech SaaS platform backend",
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
     lifespan=lifespan,
 )
 
-# Middleware
 setup_cors(app)
 
-# Routers — all under /api prefix
 app.include_router(auth_router, prefix="/api")
 app.include_router(courses_router, prefix="/api")
 app.include_router(teachers_router, prefix="/api")
 app.include_router(leads_router, prefix="/api")
 app.include_router(dashboard_router, prefix="/api")
+app.include_router(telegram_router, prefix="/api")
 
 
 @app.get("/api/health")

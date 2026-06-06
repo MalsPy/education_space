@@ -3,6 +3,7 @@ from app.routers.courses import router as courses_router
 from app.routers.teachers import router as teachers_router
 from app.routers.leads import router as leads_router
 from app.routers.dashboard import router as dashboard_router
+from app.routers.telegram import router as telegram_router
 
 __all__ = [
     "auth_router",
@@ -10,4 +11,5 @@ __all__ = [
     "teachers_router",
     "leads_router",
     "dashboard_router",
+    "telegram_router",
 ]

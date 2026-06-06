@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background-color: #0F0F14;
+    color: #F3F4F6;
+    font-family: 'DM Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #18181F; }
+  ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #52525b; }
+
+  ::selection { background: rgba(124,58,237,0.3); color: #F3F4F6; }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 font-medium transition-all duration-200 rounded-xl cursor-pointer select-none;
+  }
+  .btn:disabled { @apply opacity-50 cursor-not-allowed; }
+
+  .card {
+    @apply bg-surface border border-border rounded-2xl;
+  }
+
+  .input-field {
+    @apply w-full bg-surface-2 border border-border text-text placeholder-muted rounded-xl px-4 py-3
+           text-sm transition-all duration-200
+           focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20;
+  }
+
+  .label {
+    @apply block text-sm font-medium text-muted mb-1.5;
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .sidebar-link {
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl text-muted text-sm font-medium
+           transition-all duration-200 hover:text-text hover:bg-surface-2 cursor-pointer;
+  }
+  .sidebar-link.active {
+    @apply text-text bg-primary/10 text-primary;
+  }
+
+  .page-title {
+    @apply font-display text-2xl font-bold text-text tracking-tight;
+  }
+
+  .section-title {
+    @apply font-display text-4xl md:text-5xl font-bold text-text;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent;
+  }
+  .bg-noise {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  }
+  .glow-border {
+    box-shadow: inset 0 0 0 1px rgba(124,58,237,0.3), 0 0 24px rgba(124,58,237,0.08);
+  }
+}
