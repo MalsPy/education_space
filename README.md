@@ -39,11 +39,11 @@ Then open:
 ## Phases
 
 - [x] Phase 1 — Folder structure
-- [ ] Phase 2 — Backend setup (uv)
-- [ ] Phase 3 — Auth system
-- [ ] Phase 4 — Courses / Teachers / Leads API
+- [x] Phase 2 — Backend setup (uv)
+- [x] Phase 3 — Auth system
+- [x] Phase 4 — Courses / Teachers / Leads API
 - [ ] Phase 5 — Frontend UI
 - [ ] Phase 6 — Admin panel
-- [ ] Phase 7 — Telegram integration
+- [x] Phase 7 — Telegram integration
 - [ ] Phase 8 — Docker + Nginx
 - [ ] Phase 9 — Final integration
